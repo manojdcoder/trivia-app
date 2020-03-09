@@ -1,2 +1,2 @@
-# trivia-app
+# Trivia
 Cambrian Web Development
