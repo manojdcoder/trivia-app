@@ -4,8 +4,31 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trivia Application</title>
+    <link rel="stylesheet" type="text/css" href="./css/styles.css" />
+    <script src="./js/main.js" defer></script>
   </head>
   <body>
-    <h1>Trivia Application</h1>
+    <header class="navbar">
+      <h3 id="welcome"></h3>
+      <button id="logout" onclick="onLogoutClick()">Logout</button>
+    </header>
+    <div class="container">
+      <div id="question" class="content">
+        <div id="question-content" class="question-content"></div>
+      </div>
+      <div id="scoreboard" class="content"></div>
+    </div>
+    <template id="tplQuestion">
+      <div>
+        <div class="question-text"></div>
+        <div class="question-options"></div>
+      </div>
+    </template>
+    <template id="tplParticipant">
+      <div class="participant">
+        <div class="participant-username"></div>
+        <div class="participant-score"></div>
+      </div>
+    </template>
   </body>
 </html>
