@@ -67,6 +67,7 @@ button:active {
 }
 
 .question-options {
+  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
 }
@@ -77,6 +78,19 @@ button:active {
 
 .question-options label input {
   margin-right: 0.5rem;
+}
+
+.question-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.question-action {
+  padding: 0.5rem 1.25rem;
+  color: #fff;
+  background-color: #343a40;
+  border-color: #343a40;
+  border-radius: 0.15rem;
 }
 
 #scoreboard {

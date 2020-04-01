@@ -22,11 +22,11 @@ function syncUser() {
 }
 
 function syncQuestion(data) {
-    const question = document.querySelector("#question-content");
+    const questionContent = document.querySelector("#question-content");
     const template = document.querySelector("#tplQuestion");
     const qEl = template.content.cloneNode(true);
 
-    let { text, type, options } = data;
+    let { text, type, options, hasMore } = data;
     qEl.querySelector(".question-text").innerText = text;
 
     const isRadio = type === "radio";
@@ -37,7 +37,12 @@ function syncQuestion(data) {
 
     qEl.querySelector(".question-options").innerHTML = options;
 
-    question.append(qEl.firstElementChild);
+    questionContent.innerHTML = qEl.firstElementChild.outerHTML;
+
+    const primaryAction = document.querySelector("#question-action-primary");
+    primaryAction.innerText = hasMore ? "Next" : "Finish";
+
+    window.currentQuestion = data;
 }
 
 function syncScoreboard(participants) {
@@ -80,6 +85,7 @@ function start() {
     syncQuestion({
         text: "When does the data in session storage expire?",
         type: "radio",
+        hasMore: true,
         options: [{
             text: "When browser window is closed",
             valid: true
@@ -100,6 +106,49 @@ function onLogoutClick() {
         setUser(null);
         syncScoreboard([]);
         syncQuestion([]);
+    }
+}
+
+function onPrimaryActionClick() {
+    const currentQuestion = window.currentQuestion;
+    if (currentQuestion) {
+        const { type, hasMore, options } = currentQuestion;
+
+        const optionsEl = [...document.querySelector(".question-options").childNodes];
+        const selectedOptions = [];
+        options.forEach((option, index) => {
+            const optionEl = optionsEl[index];
+            if (optionEl
+                && ((optionEl.firstElementChild
+                    && optionEl.firstElementChild.checked)
+                    || optionEl.value)) {
+                selectedOptions.push(option);
+            }
+        });
+
+        if (!selectedOptions.length && !confirm("Are you sure, do you want to skip this question?")) {
+            return false;
+        }
+
+        if (hasMore) {
+            syncQuestion({
+                text: "Dummy question?",
+                type: "checkbox",
+                hasMore: false,
+                options: [{
+                    text: "Correct answer",
+                    valid: true
+                }, {
+                    text: "Wrong answer",
+                    valid: false
+                }, {
+                    text: "Correct answer",
+                    valid: true
+                }]
+            });
+        } else {
+
+        }
     }
 }
 
