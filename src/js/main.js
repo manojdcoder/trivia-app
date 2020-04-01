@@ -23,7 +23,10 @@ function syncUser() {
     let loginEl = document.querySelector(".login-form");
     if (user) {
         if (loginEl) {
-            loginEl.remove();
+            loginEl.addEventListener("animationend", () => {
+                loginEl.remove();
+            });
+            loginEl.classList.add("login-animate-out");
         }
     } else {
         if (!loginEl) {
@@ -33,7 +36,7 @@ function syncUser() {
         }
     }
 
-    welcomeEl.innerText = user && `Welcome, ${user}` || "Trivia";
+    welcomeEl.innerText = user && `${user}, Ready for a challenge?` || "Trivia";
     logoutEl.classList.toggle("d-none", !!!user);
 }
 
@@ -118,13 +121,13 @@ function syncScoreboard(participants) {
 
 function dummyData() {
     syncScoreboard([{
-        username: "manoj",
+        username: getUser(),
         score: 1750
     }, {
-        username: "john",
+        username: "John",
         score: 1250
     }, {
-        username: "peter",
+        username: "Peter",
         score: 1150
     }]);
 
@@ -149,7 +152,9 @@ function dummyData() {
 
 function onLogin(event) {
     event.preventDefault();
-    const value = event.target.querySelector("input[type=text]").value;
+    const targetEl = event.target;
+    const parentEl = targetEl.parentElement;
+    const value = targetEl.querySelector("input[type=text]").value;
     if (value) {
         setUser(value);
         dummyData();

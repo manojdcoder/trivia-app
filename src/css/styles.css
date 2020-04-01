@@ -71,6 +71,17 @@ input[type="text"]:focus {
   background: #f2f2f2;
 }
 
+@keyframes login-animate-out {
+  100% {
+    opacity: 0.75;
+    transform: translate(-100rem, 0);
+  }
+}
+
+.login-animate-out {
+  animation: login-animate-out 500ms ease-in;
+}
+
 .login-form form {
   position: absolute;
   top: 50%;
