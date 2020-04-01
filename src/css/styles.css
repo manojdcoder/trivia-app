@@ -11,18 +11,44 @@ body {
   height: 100%;
 }
 
+input[type="text"] {
+  display: block;
+  width: 100%;
+  padding: 0.375rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
+
 button {
   cursor: pointer;
+  padding: 0.5rem 1.25rem;
+  color: #fff;
+  background-color: #343a40;
+  border-color: #343a40;
+  border-radius: 0.15rem;
 }
 
 button:focus,
-button:active {
+button:active,
+input[type="text"]:focus {
   outline: none;
   box-shadow: none;
 }
 
 .d-none {
   display: none;
+}
+
+.show {
+  opacity: 1;
+  transition: 500ms opacity;
+}
+
+.hide {
+  opacity: 0;
 }
 
 .navbar {
@@ -34,6 +60,24 @@ button:active {
   justify-content: end;
   color: #fff;
   background-color: #007bff;
+}
+
+.login-form {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #f2f2f2;
+}
+
+.login-form form {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  transform: translate(-50%, -50%);
 }
 
 #logout {
@@ -61,6 +105,32 @@ button:active {
   border-right: 1px solid #d3d3d3;
 }
 
+@keyframes question-animate-in {
+  0% {
+    opacity: 0;
+    transform: translate(0, 5rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0);
+  }
+}
+
+.question-animate-in {
+  animation: question-animate-in 300ms ease-in;
+}
+
+@keyframes question-animate-out {
+  100% {
+    opacity: 0;
+    transform: translate(0, -5rem);
+  }
+}
+
+.question-animate-out {
+  animation: question-animate-out 300ms ease-in;
+}
+
 .question-text {
   font-weight: bold;
   margin-bottom: 1rem;
@@ -85,12 +155,9 @@ button:active {
   justify-content: flex-end;
 }
 
-.question-action {
-  padding: 0.5rem 1.25rem;
-  color: #fff;
-  background-color: #343a40;
-  border-color: #343a40;
-  border-radius: 0.15rem;
+.finish {
+  background-color: #dc3545;
+  border-color: #dc3545;
 }
 
 #scoreboard {
@@ -117,14 +184,13 @@ button:active {
 @keyframes scale {
   0% {
     opacity: 0;
-    transform: scale(1, 0);
+    transform: translate(0, 5rem) scale(1.5);
   }
-  50% {
-    transform: scale(1, 1.5);
+  75% {
+    transform: translate(0) scale(1);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
   }
 }
 

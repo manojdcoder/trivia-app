@@ -10,21 +10,33 @@
   <body>
     <header class="navbar">
       <h3 id="welcome"></h3>
-      <button id="logout" onclick="onLogoutClick()">Logout</button>
+      <button id="logout" class="d-none" onclick="onLogoutClick()">
+        Logout
+      </button>
     </header>
     <div class="container">
       <div id="question" class="content">
-        <div id="question-content" class="question-content"></div>
-        <div class="question-actions">
+        <div id="question-content"></div>
+        <div class="question-actions hide">
           <button
             id="question-action-primary"
-            class="question-action"
             onclick="onPrimaryActionClick()"
           ></button>
         </div>
       </div>
       <div id="scoreboard" class="content"></div>
     </div>
+    <template id="tplLogin">
+      <div class="login-form">
+        <form onsubmit="onLogin(event)">
+          <h3 style="margin-bottom: 1rem;">Choose a username</h3>
+          <input type="text" style="margin-bottom: 1rem;" name="username" />
+          <button type="submit" style="align-self: flex-end;">
+            Start!
+          </button>
+        </form>
+      </div>
+    </template>
     <template id="tplQuestion">
       <div>
         <div class="question-text"></div>

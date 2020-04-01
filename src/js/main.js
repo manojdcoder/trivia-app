@@ -17,37 +17,85 @@ function setUser(value) {
 
 function syncUser() {
     const user = getUser();
-    document.querySelector("#welcome").innerText = user && `Welcome, ${user}` || "Trivia";
-    document.querySelector("#logout").classList[!user && "add" || "remove"]("d-none");
+    const welcomeEl = document.querySelector("#welcome");
+    const logoutEl = document.querySelector("#logout");
+
+    let loginEl = document.querySelector(".login-form");
+    if (user) {
+        if (loginEl) {
+            loginEl.remove();
+        }
+    } else {
+        if (!loginEl) {
+            const template = document.querySelector("#tplLogin");
+            loginEl = template.content.cloneNode(true);
+            document.body.append(loginEl.firstElementChild);
+        }
+    }
+
+    welcomeEl.innerText = user && `Welcome, ${user}` || "Trivia";
+    logoutEl.classList.toggle("d-none", !!!user);
 }
 
 function syncQuestion(data) {
     const questionContent = document.querySelector("#question-content");
-    const template = document.querySelector("#tplQuestion");
-    const qEl = template.content.cloneNode(true);
+    const oldQuestionEl = questionContent.firstElementChild;
 
-    let { text, type, options, hasMore } = data;
-    qEl.querySelector(".question-text").innerText = text;
+    if (data) {
+        const template = document.querySelector("#tplQuestion");
+        const qEl = template.content.cloneNode(true);
+        const questionEl = qEl.firstElementChild;
 
-    const isRadio = type === "radio";
-    options = options.map((option, index) => {
-        return `<label><input type="${type}" name="${isRadio && "radio" || `${type}-index`
-            }">${option.text}</label>`;
-    }).join("");
+        let { text, type, options, hasMore } = data;
+        qEl.querySelector(".question-text").innerText = text;
 
-    qEl.querySelector(".question-options").innerHTML = options;
+        const isRadio = type === "radio";
+        options = options.map((option, index) => {
+            return `<label><input type="${type}" name="${isRadio && "radio" || `${type}-index`
+                }">${option.text}</label>`;
+        }).join("");
+        qEl.querySelector(".question-options").innerHTML = options;
 
-    questionContent.innerHTML = qEl.firstElementChild.outerHTML;
+        const questionActionsEl = document.querySelector(".question-actions");
+        questionActionsEl.classList.toggle("show", false);
+        questionActionsEl.classList.toggle("hide", true);
 
-    const primaryAction = document.querySelector("#question-action-primary");
-    primaryAction.innerText = hasMore ? "Next" : "Finish";
+        const primaryActionEl = questionActionsEl.querySelector("#question-action-primary");
+        if (hasMore) {
+            primaryActionEl.innerText = "Next";
+        } else {
+            primaryActionEl.innerText = "Finish";
+        }
+        primaryActionEl.classList.toggle("finish", !hasMore);
+
+        const showQuestionEl = () => {
+            questionEl.classList.add("question-animate-in");
+            questionEl.addEventListener("animationend", () => {
+                questionActionsEl.classList.toggle("hide", false);
+                questionActionsEl.classList.toggle("show", true);
+            });
+            questionContent.appendChild(questionEl);
+        };
+
+        if (oldQuestionEl) {
+            oldQuestionEl.addEventListener("animationend", () => {
+                oldQuestionEl.remove();
+                showQuestionEl();
+            });
+            oldQuestionEl.classList.add("question-animate-out");
+        } else {
+            showQuestionEl();
+        }
+    } else if (oldQuestionEl) {
+        oldQuestionEl.remove();
+    }
 
     window.currentQuestion = data;
 }
 
 function syncScoreboard(participants) {
     const currentUser = getUser();
-    const scoreboard = document.querySelector("#scoreboard");
+    const scoreboardEl = document.querySelector("#scoreboard");
     const template = document.querySelector("#tplParticipant");
 
     participants = participants.map(participant => {
@@ -63,22 +111,20 @@ function syncScoreboard(participants) {
         pEl.querySelector(".participant-score").innerText = score;
 
         return pEl.firstElementChild.outerHTML;
-    });
+    }).join("");
 
-    scoreboard.innerHTML = participants.join("");
+    scoreboardEl.innerHTML = participants;
 }
 
-function start() {
-    setUser("Manoj");
-
+function dummyData() {
     syncScoreboard([{
-        username: "Manoj",
+        username: "manoj",
         score: 1750
     }, {
-        username: "John",
+        username: "john",
         score: 1250
     }, {
-        username: "Peter",
+        username: "peter",
         score: 1150
     }]);
 
@@ -101,11 +147,20 @@ function start() {
 
 // Events
 
+function onLogin(event) {
+    event.preventDefault();
+    const value = event.target.querySelector("input[type=text]").value;
+    if (value) {
+        setUser(value);
+        dummyData();
+    }
+}
+
 function onLogoutClick() {
     if (confirm("Are you sure, do you want to logout of current session?")) {
         setUser(null);
         syncScoreboard([]);
-        syncQuestion([]);
+        syncQuestion();
     }
 }
 
@@ -152,4 +207,8 @@ function onPrimaryActionClick() {
     }
 }
 
-start();
+// Initiate
+syncUser();
+if (getUser()) {
+    dummyData();
+}
