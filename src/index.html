@@ -33,12 +33,22 @@
         <template id="tplLogin">
             <div class="login-form">
                 <form onsubmit="onLogin(event)">
-                    <h3 style="margin-bottom: 1rem;">Choose a username</h3>
-                    <input
-                        type="text"
-                        style="margin-bottom: 1rem;"
-                        name="username"
-                    />
+                    <div class="username">
+                        <h3 style="margin-bottom: 1rem;">Choose a username</h3>
+                        <input
+                            type="text"
+                            style="margin-bottom: 1rem;"
+                            name="username"
+                        />
+                    </div>
+                    <div class="pin">
+                        <h3 style="margin-bottom: 1rem;">Your PIN</h3>
+                        <input
+                            type="text"
+                            style="margin-bottom: 1rem;"
+                            name="pin"
+                        />
+                    </div>
                     <button type="submit" style="align-self: flex-end;">
                         Start!
                     </button>

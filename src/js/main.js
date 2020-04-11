@@ -1,12 +1,12 @@
 if ("serviceWorker" in navigator) {
-    // navigator.serviceWorker.register("/sw.js");
+    navigator.serviceWorker.register("/sw.js");
 }
 
 const USERNAME = "username";
-const SESSION_NAME = "session-name";
 
 let peer;
 let conn;
+let session;
 
 // Methods
 
@@ -28,13 +28,17 @@ function syncUser() {
     const welcomeEl = document.querySelector("#welcome");
     const logoutEl = document.querySelector("#logout");
 
+    if (peer) {
+        peer.destroy();
+        peer = null;
+    }
+
     let loginEl = document.querySelector(".login-form");
-    if (user) {
-        if (!peer) {
-            peer = new Peer(`trivia-app-${user}`);
-            peer.on("open", onPeerOpen);
-            peer.on("close", onPeerClose);
-        }
+    if (user && session !== void 0) {
+        peer = new Peer(`trivia-app-${user}`);
+        peer.on("open", onPeerOpen);
+        peer.on("close", onPeerClose);
+
         if (loginEl) {
             loginEl.addEventListener("animationend", () => {
                 loginEl.remove();
@@ -42,36 +46,17 @@ function syncUser() {
             loginEl.classList.add("login-animate-out");
         }
     } else {
-        if (peer) {
-            peer.destroy();
-            peer = null;
-        }
         if (!loginEl) {
             const template = document.querySelector("#tplLogin");
-            loginEl = template.content.cloneNode(true);
-            document.body.append(loginEl.firstElementChild);
+            loginEl = template.content.cloneNode(true).firstElementChild;
+            document.body.append(loginEl);
         }
+        loginEl.querySelector(".username").classList.toggle("d-none", !!user);
     }
 
     welcomeEl.innerText =
         (user && `${user}, Ready for a challenge?`) || "Trivia";
     logoutEl.classList.toggle("d-none", !!!user);
-}
-
-function onPeerOpen() {
-    peer.on("connection", onPeerConnection);
-    peer.connect(SESSION_NAME);
-}
-
-function onPeerClose() {
-    conn = null;
-}
-
-function onPeerConnection(newConn) {
-    conn = newConn;
-    conn.on("data", function(data) {
-        console.log(`Data recieved: ${JSON.stringify(data)}`);
-    });
 }
 
 function syncQuestion(data) {
@@ -202,12 +187,33 @@ function dummyData() {
 function onLogin(event) {
     event.preventDefault();
     const targetEl = event.target;
-    const parentEl = targetEl.parentElement;
-    const value = targetEl.querySelector("input[type=text]").value;
-    if (value) {
-        setUser(value);
-        dummyData();
+    const usernameEl = targetEl.querySelector("input[name=username]");
+    const user = usernameEl.value || getUser();
+    const pinEl = targetEl.querySelector("input[name=pin]");
+    if (user) {
+        session = pinEl.value;
+        setUser(user);
     }
+}
+
+function onPeerOpen() {
+    peer.on("connection", onPeerConnection);
+    // Head user may not have a session id
+    if (session) {
+        peer.connect(session);
+    }
+    dummyData();
+}
+
+function onPeerClose() {
+    conn = null;
+}
+
+function onPeerConnection(newConn) {
+    conn = newConn;
+    conn.on("data", function(data) {
+        console.log(`Data recieved: ${JSON.stringify(data)}`);
+    });
 }
 
 function onLogoutClick() {
@@ -271,18 +277,10 @@ function onPrimaryActionClick() {
     }
 }
 
-// Initiate
-function start() {
-    syncUser();
-    if (getUser()) {
-        dummyData();
-    }
-}
-
 function isDocumentReady() {
     if (document.readyState === "complete") {
         document.onreadystatechange = null;
-        start();
+        syncUser();
         return true;
     }
     return false;
