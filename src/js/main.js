@@ -1,16 +1,24 @@
-const USER_NAME = "username";
+if ("serviceWorker" in navigator) {
+    // navigator.serviceWorker.register("/sw.js");
+}
+
+const USERNAME = "username";
+const SESSION_NAME = "session-name";
+
+let peer;
+let conn;
 
 // Methods
 
 function getUser() {
-    return localStorage.getItem(USER_NAME);
+    return localStorage.getItem(USERNAME);
 }
 
 function setUser(value) {
     if (value) {
-        localStorage.setItem(USER_NAME, value);
+        localStorage.setItem(USERNAME, value);
     } else {
-        localStorage.removeItem(USER_NAME);
+        localStorage.removeItem(USERNAME);
     }
     syncUser();
 }
@@ -22,6 +30,11 @@ function syncUser() {
 
     let loginEl = document.querySelector(".login-form");
     if (user) {
+        if (!peer) {
+            peer = new Peer(`trivia-app-${user}`);
+            peer.on("open", onPeerOpen);
+            peer.on("close", onPeerClose);
+        }
         if (loginEl) {
             loginEl.addEventListener("animationend", () => {
                 loginEl.remove();
@@ -29,6 +42,10 @@ function syncUser() {
             loginEl.classList.add("login-animate-out");
         }
     } else {
+        if (peer) {
+            peer.destroy();
+            peer = null;
+        }
         if (!loginEl) {
             const template = document.querySelector("#tplLogin");
             loginEl = template.content.cloneNode(true);
@@ -36,8 +53,25 @@ function syncUser() {
         }
     }
 
-    welcomeEl.innerText = user && `${user}, Ready for a challenge?` || "Trivia";
+    welcomeEl.innerText =
+        (user && `${user}, Ready for a challenge?`) || "Trivia";
     logoutEl.classList.toggle("d-none", !!!user);
+}
+
+function onPeerOpen() {
+    peer.on("connection", onPeerConnection);
+    peer.connect(SESSION_NAME);
+}
+
+function onPeerClose() {
+    conn = null;
+}
+
+function onPeerConnection(newConn) {
+    conn = newConn;
+    conn.on("data", function(data) {
+        console.log(`Data recieved: ${JSON.stringify(data)}`);
+    });
 }
 
 function syncQuestion(data) {
@@ -53,17 +87,22 @@ function syncQuestion(data) {
         qEl.querySelector(".question-text").innerText = text;
 
         const isRadio = type === "radio";
-        options = options.map((option, index) => {
-            return `<label><input type="${type}" name="${isRadio && "radio" || `${type}-index`
-                }">${option.text}</label>`;
-        }).join("");
+        options = options
+            .map((option, index) => {
+                return `<label><input type="${type}" name="${(isRadio &&
+                    "radio") ||
+                    `${type}-index`}">${option.text}</label>`;
+            })
+            .join("");
         qEl.querySelector(".question-options").innerHTML = options;
 
         const questionActionsEl = document.querySelector(".question-actions");
         questionActionsEl.classList.toggle("show", false);
         questionActionsEl.classList.toggle("hide", true);
 
-        const primaryActionEl = questionActionsEl.querySelector("#question-action-primary");
+        const primaryActionEl = questionActionsEl.querySelector(
+            "#question-action-primary"
+        );
         if (hasMore) {
             primaryActionEl.innerText = "Next";
         } else {
@@ -101,50 +140,60 @@ function syncScoreboard(participants) {
     const scoreboardEl = document.querySelector("#scoreboard");
     const template = document.querySelector("#tplParticipant");
 
-    participants = participants.map(participant => {
-        let { username, score } = participant;
-        const pEl = template.content.cloneNode(true);
+    participants = participants
+        .map(participant => {
+            let { username, score } = participant;
+            const pEl = template.content.cloneNode(true);
 
-        if (username === currentUser) {
-            username += " (You)";
-            pEl.firstElementChild.classList.add("current-user");
-        }
+            if (username === currentUser) {
+                username += " (You)";
+                pEl.firstElementChild.classList.add("current-user");
+            }
 
-        pEl.querySelector(".participant-username").innerText = username;
-        pEl.querySelector(".participant-score").innerText = score;
+            pEl.querySelector(".participant-username").innerText = username;
+            pEl.querySelector(".participant-score").innerText = score;
 
-        return pEl.firstElementChild.outerHTML;
-    }).join("");
+            return pEl.firstElementChild.outerHTML;
+        })
+        .join("");
 
     scoreboardEl.innerHTML = participants;
 }
 
 function dummyData() {
-    syncScoreboard([{
-        username: getUser(),
-        score: 1750
-    }, {
-        username: "John",
-        score: 1250
-    }, {
-        username: "Peter",
-        score: 1150
-    }]);
+    syncScoreboard([
+        {
+            username: getUser(),
+            score: 1750
+        },
+        {
+            username: "John",
+            score: 1250
+        },
+        {
+            username: "Peter",
+            score: 1150
+        }
+    ]);
 
     syncQuestion({
         text: "When does the data in session storage expire?",
         type: "radio",
         hasMore: true,
-        options: [{
-            text: "When browser window is closed",
-            valid: true
-        }, {
-            text: "When browser is closed",
-            valid: false
-        }, {
-            text: "It never expires",
-            valid: false
-        }]
+        options: [
+            {
+                text: "When browser window is closed",
+                valid: true
+            },
+            {
+                text: "When browser is closed",
+                valid: false
+            },
+            {
+                text: "It never expires",
+                valid: false
+            }
+        ]
     });
 }
 
@@ -174,19 +223,26 @@ function onPrimaryActionClick() {
     if (currentQuestion) {
         const { type, hasMore, options } = currentQuestion;
 
-        const optionsEl = [...document.querySelector(".question-options").childNodes];
+        const optionsEl = [
+            ...document.querySelector(".question-options").childNodes
+        ];
         const selectedOptions = [];
         options.forEach((option, index) => {
             const optionEl = optionsEl[index];
-            if (optionEl
-                && ((optionEl.firstElementChild
-                    && optionEl.firstElementChild.checked)
-                    || optionEl.value)) {
+            if (
+                optionEl &&
+                ((optionEl.firstElementChild &&
+                    optionEl.firstElementChild.checked) ||
+                    optionEl.value)
+            ) {
                 selectedOptions.push(option);
             }
         });
 
-        if (!selectedOptions.length && !confirm("Are you sure, do you want to skip this question?")) {
+        if (
+            !selectedOptions.length &&
+            !confirm("Are you sure, do you want to skip this question?")
+        ) {
             return false;
         }
 
@@ -195,25 +251,43 @@ function onPrimaryActionClick() {
                 text: "Dummy question?",
                 type: "checkbox",
                 hasMore: false,
-                options: [{
-                    text: "Correct answer",
-                    valid: true
-                }, {
-                    text: "Wrong answer",
-                    valid: false
-                }, {
-                    text: "Correct answer",
-                    valid: true
-                }]
+                options: [
+                    {
+                        text: "Correct answer",
+                        valid: true
+                    },
+                    {
+                        text: "Wrong answer",
+                        valid: false
+                    },
+                    {
+                        text: "Correct answer",
+                        valid: true
+                    }
+                ]
             });
         } else {
-
         }
     }
 }
 
 // Initiate
-syncUser();
-if (getUser()) {
-    dummyData();
+function start() {
+    syncUser();
+    if (getUser()) {
+        dummyData();
+    }
+}
+
+function isDocumentReady() {
+    if (document.readyState === "complete") {
+        document.onreadystatechange = null;
+        start();
+        return true;
+    }
+    return false;
+}
+
+if (!isDocumentReady()) {
+    document.onreadystatechange = isDocumentReady;
 }
